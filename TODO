@@ -3,6 +3,10 @@ $join
 $kick
 make kicked users not be able to join again
 
+info and help commands
+change presence to $help
+
+
 english translation
 
 LOTS OF TESTING
