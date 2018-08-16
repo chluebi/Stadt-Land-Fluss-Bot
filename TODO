@@ -6,6 +6,11 @@ make kicked users not be able to join again
 info and help commands
 change presence to $help
 
+$points <player> <value>
+
+*basic letter checking
+*score customisablity
+
 
 english translation
 
