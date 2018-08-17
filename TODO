@@ -1,20 +1,20 @@
-$leave
-$join
-$kick
-make kicked users not be able to join again
+$leave    5 min
+$join     10 min
+$kick     5 min
+make kicked users not be able to join again   10 min
 
-info and help commands
-change presence to $help
+info and help commands    45 min
+change presence to $help    10 min
 
-$points <player> <value>
+$points <player> <add/set> <value>      15 min
 
-*basic letter checking customisability
-*score customisablity
-*judging customisablity
+*basic letter checking customisability    15 min
+*score customisablity           15 min
+*judging customisablity         15 min
 
 
-english translation
+english translation       ~4 hours
 
-LOTS OF TESTING
+LOTS OF TESTING           ~3 days
 
-making the code actually readable? naaaa
+making the code actually readable? naaaa     ~2 years
