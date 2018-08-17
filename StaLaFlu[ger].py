@@ -138,7 +138,7 @@ async def countdown():
                         em.add_field(name='Vorzeitiges Beenden', value=endplayer + ' hat die Runde vorzeitig beendet', inline=False)
 
                     await client.send_message(party[n], embed=em)
-
+                print('jumped loop')
                 await asyncio.sleep(2)
                 desc = 'Die Runde ist vorbei, bitte begib dich zurück in den Hauptchat.'
                 em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
@@ -146,8 +146,8 @@ async def countdown():
                 if not endplayer == '':
                     em.add_field(name='Vorzeitiges Beenden', value=endplayer + ' hat die Runde vorzeitig beendet',inline=False)
 
-
-                client.send_message(mainchannel, embed=em)
+                if len(party) == 0:
+                    await client.send_message(mainchannel, embed=em)
 
 
             if timer % 5 == 0 and gamestage == 'playing' and not timer == roundtime:
@@ -232,6 +232,26 @@ async def on_message(message):
     # info and debug commands
     if msgsplit[0] == '$status':
         print('Gamestage: ' + gamestage)
+
+
+    # general commands for all users
+    if gamestage == 'continue':
+        if msgsplit[0] == '$leave':
+            if message.author in party:
+                userindex = party.index(message.author)
+                party.remove(message.author)
+                points.pop(userindex)
+                await client.send_message(mainchannel,'{} hat das Spiel verlassen.'.format(message.author.display_name))
+            else:
+                await client.send_message(message.channel,'Du bist im Moment in keinem Spiel.')
+
+        if msgsplit[0] == '$join':
+            if message.author in party:
+                await client.send_message(message.channel,'Du bist schon im Spiel.')
+            else:
+                party.append(message.author)
+                points.append(0)
+                await client.send_message(mainchannel,'{} ist dem Spiel beigetreten.'.format(message.author.display_name))
 
     # the following are host commands
     if message.author == host and message.channel == mainchannel:
@@ -335,6 +355,8 @@ async def on_message(message):
         else:
             breakmsg = await client.send_message(mainchannel,'Die nächste Runde startet bald')
 
+        await client.send_message(mainchannel, 'Neue Spieler können beitreten, indem sie dem Bot $join schreiben \n'+
+                            'Falls du nicht mehr mitspielen willst, kannst du jetzt dem Bot $leave schreiben')
 
         while i != breaktime:
             await asyncio.sleep(1)
