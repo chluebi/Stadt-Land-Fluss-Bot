@@ -1,5 +1,8 @@
 $leave    5 min       done
 $join     10 min      done
+
+revamp $leave and $join
+
 $kick     5 min
 make kicked users not be able to join again   10 min
 
