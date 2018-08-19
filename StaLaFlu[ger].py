@@ -37,6 +37,10 @@ round = 0 #at which round of the game
 points = [] # list of all the points the users have
 letterlist = [] #letters that already were in the game once
 
+#user managment
+leavers = [] #people who once were in the game but left the game
+bans = [] #people who can't join this instance of the game
+
 
 #misc variables
 reactors = []   # the name list of people reacted to the join message
@@ -137,7 +141,9 @@ async def countdown():
                     if not endplayer == '':
                         em.add_field(name='Vorzeitiges Beenden', value=endplayer + ' hat die Runde vorzeitig beendet', inline=False)
 
-                    await client.send_message(party[n], embed=em)
+                    if not party[n] in leavers:
+                        await client.send_message(party[n], embed=em)
+
                 print('jumped loop')
                 await asyncio.sleep(2)
                 desc = 'Die Runde ist vorbei, bitte begib dich zurück in den Hauptchat.'
@@ -166,10 +172,11 @@ async def countdown():
                         n = 0
                     print(n)
                     print(answermsg)
-                    if timer > 0:
-                        await client.edit_message(answermsg[n], msg + msg2 + msg3 + msg4)
-                    else:
-                        await client.edit_message(answermsg[n], msg + msg2 + msg3)
+                    if party[n] not in leavers:
+                        if timer > 0:
+                            await client.edit_message(answermsg[n], msg + msg2 + msg3 + msg4)
+                        else:
+                            await client.edit_message(answermsg[n], msg + msg2 + msg3)
 
             if timer == 0 and gamestage == 'judge':
                 gamestage = 'judgedone'
@@ -181,10 +188,16 @@ async def countdown():
             if timer % 5 == 0 and gamestage == 'judge' and not timer == judgetime:
                 msg = 'Fertig mit Bewerten? Klicke auf den grünen Hacken unter dieser Nachricht. \n'
                 msg2 = '``Zeit verbleibend: {}``'.format(str(timer))
-                if timer > 0:
-                    await client.edit_message(donemsg, msg + msg2)
-                else:
-                    await client.edit_message(donemsg, msg)
+
+                print(donemsg)
+
+                if donemsg != 0:
+                    if timer > 0:
+                        await client.edit_message(donemsg, msg + msg2)
+                    else:
+                        await client.edit_message(donemsg, msg)
+
+            print(timer)
 
 
 
@@ -223,6 +236,8 @@ async def on_message(message):
     global endplayer
     global judgetime
     global breaktime
+    global leavers
+    global bans
 
     # split the message to better handle the different inputs
     msgsplit = message.content.split(' ')
@@ -238,16 +253,18 @@ async def on_message(message):
     if gamestage == 'continue':
         if msgsplit[0] == '$leave':
             if message.author in party:
-                userindex = party.index(message.author)
-                party.remove(message.author)
-                points.pop(userindex)
+                leavers.append(message.author)
                 await client.send_message(mainchannel,'{} hat das Spiel verlassen.'.format(message.author.display_name))
             else:
                 await client.send_message(message.channel,'Du bist im Moment in keinem Spiel.')
 
         if msgsplit[0] == '$join':
             if message.author in party:
-                await client.send_message(message.channel,'Du bist schon im Spiel.')
+                if message.author in leavers:
+                    leavers.remove(message.author)
+                    await client.send_message(mainchannel,'{} ist dem Spiel erneut beigetreten.'.format(message.author.display_name))
+                else:
+                    await client.send_message(message.channel,'Du bist schon im Spiel.')
             else:
                 party.append(message.author)
                 points.append(0)
@@ -386,13 +403,15 @@ async def on_message(message):
         await client.send_message(message.channel, embed=em)
 
         for i in range(len(party)):
-            await client.send_message(party[i], embed=em)
+            if party[i] not in leavers:
+                await client.send_message(party[i], embed=em)
 
         answers = [[''] * len(categories) for i in range(len(party))]
         print(answers)
 
         await asyncio.sleep(10)
         timer = roundtime
+        endplayer = ''
         gamestage = 'playing'
         round += 1
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVXYZ'
@@ -412,8 +431,11 @@ async def on_message(message):
 
 
         for i in range(len(party)):
-            sent = await client.send_message(party[i], msg + msg2 + msg3)
-            answermsg.append(sent)
+            if party[i] not in leavers:
+                sent = await client.send_message(party[i], msg + msg2 + msg3)
+                answermsg.append(sent)
+            else:
+                answermsg.append(0)
             pointsround.append(0)
 
 
@@ -531,12 +553,17 @@ async def on_message(message):
     # script for the game
     if gamestage == 'playing':
         print('playing')
+        print(leavers)
+
+        if message.author in leavers:
+            return
 
         if not message.channel.is_private:
             return
 
         if not message.author in party:
             return
+
         userindex = party.index(message.author)
 
 
@@ -651,9 +678,10 @@ async def on_message(message):
         msg3 = '\n antworte in folgendem Format: *1 Afrika*'
 
         for i in range(len(party)):
-            sent = await client.send_message(party[i],msg + msg2 + msg3)
-            answermsg.append(sent)
-            print('added object to answermsg')
+            if party[i] not in leavers:
+                sent = await client.send_message(party[i],msg + msg2 + msg3)
+                answermsg.append(sent)
+                print('added object to answermsg')
             pointsround.append(0)
 
         print(answermsg)
@@ -704,15 +732,16 @@ async def on_message(message):
 
         roundtime = await client.wait_for_message(timeout = 10, author = message.author, channel = message.channel)
 
-        if roundtime.content.startswith('$reset'):
-            return
-        if roundtime.content.startswith('$endgame'):
-            return
+
 
         if roundtime is None:
             roundtime = len(categories) * 10
             await client.send_message(message.channel, 'Zeit abgelaufen. Rundenlänge auf Standardwert {} gesetzt.'.format(roundtime))
         elif not is_int(roundtime.content):
+            if roundtime.content.startswith('$reset'):
+                return
+            if roundtime.content.startswith('$endgame'):
+                return
             roundtime = len(categories) * 10
             await client.send_message(message.channel, 'Nicht valider Wert eingegeben. Rundenlänge auf Standardwert {} gesetzt.'.format(roundtime))
         else:
@@ -731,15 +760,16 @@ async def on_message(message):
 
         roundmax = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
 
-        if roundmax.content.startswith('$reset'):
-            return
-        if roundmax.content.startswith('$endgame'):
-            return
+
 
         if roundmax is None:
             roundmax = 5
             await client.send_message(message.channel, 'Zeit abgelaufen. Rundenanzahl auf Standardwert {} gesetzt.'.format(roundmax))
         elif not is_int(roundmax.content):
+            if roundmax.content.startswith('$reset'):
+                return
+            if roundmax.content.startswith('$endgame'):
+                return
             roundmax = 5
             await client.send_message(message.channel, 'Nicht valider Wert eingegeben. Rundenanzahl auf Standardwert {} gesetzt.'.format(roundmax))
         else:
@@ -758,15 +788,15 @@ async def on_message(message):
 
             jointime = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
 
-            if jointime.content.startswith('$reset'):
-                return
-            if jointime.content.startswith('$endgame'):
-                return
 
             if jointime is None:
                 jointime = 20
                 await client.send_message(message.channel,'Zeit abgelaufen. Beitretezeit auf Standardwert {} gesetzt.'.format(jointime))
             elif not is_int(jointime.content):
+                if jointime.content.startswith('$reset'):
+                    return
+                if jointime.content.startswith('$endgame'):
+                    return
                 jointime = 20
                 await client.send_message(message.channel,'Nicht valider Wert eingegeben. Beitretezeit auf Standardwert {} gesetzt.'.format(jointime))
             else:
@@ -783,15 +813,15 @@ async def on_message(message):
 
             judgetime = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
 
-            if judgetime.content.startswith('$reset'):
-                return
-            if judgetime.content.startswith('$endgame'):
-                return
 
             if judgetime is None:
                 judgetime = 180
                 await client.send_message(message.channel,'Zeit abgelaufen. Bewertungszeit auf Standardwert {} gesetzt.'.format(judgetime))
             elif not is_int(judgetime.content):
+                if judgetime.content.startswith('$reset'):
+                    return
+                if judgetime.content.startswith('$endgame'):
+                    return
                 judgetime = 180
                 await client.send_message(message.channel,'Nicht valider Wert eingegeben. Bewertungszeit auf Standardwert {} gesetzt.'.format(judgetime))
             else:
@@ -810,10 +840,6 @@ async def on_message(message):
 
             breaktime = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
 
-            if breaktime.content.startswith('$reset'):
-                return
-            if breaktime.content.startswith('$endgame'):
-                return
 
             if breaktime is None:
                 breaktime = 15
@@ -821,6 +847,10 @@ async def on_message(message):
                                           'Zeit abgelaufen. Pausenlänge auf Standardwert {} gesetzt.'.format(
                                               breaktime))
             elif not is_int(breaktime.content):
+                if breaktime.content.startswith('$reset'):
+                    return
+                if breaktime.content.startswith('$endgame'):
+                    return
                 breaktime = 15
                 await client.send_message(message.channel,
                                           'Nicht valider Wert eingegeben. Pausenlänge auf Standardwert {} gesetzt.'.format(
@@ -895,12 +925,15 @@ async def on_reaction_add(reaction, user):
             if not user in party:
                 print('user not in the game reacted to done message')
                 return
+            if user in leavers:
+                return
+
             if reaction.emoji != '✅':
                 return
 
             peopledone += 1
 
-            if peopledone >= len(party):
+            if peopledone >= len(party) - len(leavers):
                 gamestage = 'judgedone'
                 desc = 'Bewertungsphase beendet'
                 em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
