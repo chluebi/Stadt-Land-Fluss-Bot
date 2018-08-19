@@ -197,7 +197,7 @@ async def countdown():
                     else:
                         await client.edit_message(donemsg, msg)
 
-            print(timer)
+            await client.change_presence(game=discord.Game(name='$help'))
 
 
 
@@ -250,7 +250,34 @@ async def on_message(message):
 
 
     # general commands for all users
-    if gamestage == 'continue':
+
+    if msgsplit[0] == '$help':
+        embed = discord.Embed(title="Stadt, Land, Fluss", description="Hilfemenu")
+        embed.add_field(name='$commands', value='Eine Liste von Befehlen für Spieler.')
+        embed.add_field(name='$hostcommands', value = 'Eine Liste von Befehlen für den Host.')
+        embed.add_field(name='$rules', value='Die Regeln für das Spiel.')
+        await client.send_message(message.channel,embed=embed)
+
+    if msgsplit[0] == '$commands':
+        embed = discord.Embed(title="Stadt, Land, Fluss", description="Spielerbefehle")
+        embed.add_field(name='$join', value='Trete einem bestehenden Spiel bei. *Dieser Befehl kann nur zwischen Runden benutzt werden*')
+        embed.add_field(name='$leave', value='Verlasse ein bestehendes Spiel. *Dieser Befehl kann nur zwischen Runden benutzt werden*')
+        await client.send_message(message.channel, embed=embed)
+
+    if msgsplit[0] == '$hostcommands':
+        embed = discord.Embed(title="Stadt, Land, Fluss", description="Hostmenu")
+        embed.add_field(name='$endgame', value='Beendet das Spiel vorzeitig.')
+        embed.add_field(name='$start', value='Starte ein Spiel vorzeitig. *Kann nur in der Beitretephase benutzt werden*')
+        embed.add_field(name='$continue', value='Starte die nächste Runde vorzeitig. *Kann nur zwischen Runden benutzt werden*')
+        embed.add_field(name='$change <Variable> <Wert>', value='Ändere einen der folgenden Variablen: roundtime, roundmax, judgetime, breaktime')
+        await client.send_message(message.channel, embed=embed)
+
+    if msgsplit[0] == '$rules':
+        embed = discord.Embed(title="Stadt, Land, Fluss: Regeln", description="Jede Runde wird ein zufälliger Buchstabe gewählt, finde zu jeder Kategorie ein Wort, das zu den Kategorien passt und " +
+                              'mit dem Buchstaben beginnt.')
+        await client.send_message(message.channel, embed=embed)
+
+    if gamestage == 'continue': #join and leave commands
         if msgsplit[0] == '$leave':
             if message.author in party:
                 leavers.append(message.author)
