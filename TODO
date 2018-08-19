@@ -1,15 +1,17 @@
 $leave    5 min       done
 $join     10 min      done
 
-revamp $leave and $join
+revamp $leave and $join done
 
-$kick     5 min
-make kicked users not be able to join again   10 min
 
-info and help commands    45 min
+info and help commands    45 min done
 change presence to $help    10 min
 
 $points <player> <add/set> <value>      15 min
+
+
+*$kick 5 min
+*$ban 10 min
 
 *basic letter checking customisability    15 min
 *score customisablity           15 min
