@@ -136,22 +136,22 @@ async def countdown():
                 print('going to judging')
                 gamestage = 'judging'
                 for n in range(len(party)):
-                    desc = 'Die Runde ist vorbei, bitte begib dich zurück in den Hauptchat.'
-                    em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+                    desc = 'The round is over, please go back to the main channel.'
+                    em = discord.Embed(title='Scattergories', description=desc)
 
                     if not endplayer == '':
-                        em.add_field(name='Vorzeitiges Beenden', value=endplayer + ' hat die Runde vorzeitig beendet', inline=False)
+                        em.add_field(name='Premature ending.', value=endplayer + ' stopped the round prematurely.', inline=False)
 
                     if not party[n] in leavers:
                         await client.send_message(party[n], embed=em)
 
                 print('jumped loop')
                 await asyncio.sleep(2)
-                desc = 'Die Runde ist vorbei, bitte begib dich zurück in den Hauptchat.'
+                desc = 'The round is over, please go back to the main channel.'
                 em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
 
                 if not endplayer == '':
-                    em.add_field(name='Vorzeitiges Beenden', value=endplayer + ' hat die Runde vorzeitig beendet',inline=False)
+                    em.add_field(name='Premature ending.', value=endplayer + ' stopped the round prematurely.',inline=False)
 
                 if len(party) == 0:
                     await client.send_message(mainchannel, embed=em)
