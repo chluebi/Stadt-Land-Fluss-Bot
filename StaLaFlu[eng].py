@@ -115,7 +115,6 @@ def is_int(value):
         prefix = int(value) + 1
         return True
     except ValueError:
-        print('ValueError')
         return False
 
 
@@ -133,7 +132,6 @@ async def countdown():
             timer -= 1
             await asyncio.sleep(1)
             if timer == 0 and gamestage == 'playing':
-                print('going to judging')
                 gamestage = 'judging'
                 for n in range(len(party)):
                     desc = 'The round is over, please go back to the main channel.'
@@ -144,11 +142,10 @@ async def countdown():
 
                     if not party[n] in leavers:
                         await client.send_message(party[n], embed=em)
-
-                print('jumped loop')
+                        
                 await asyncio.sleep(2)
                 desc = 'The round is over, please go back to the main channel.'
-                em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+                em = discord.Embed(title='Scattergories', description=desc)
 
                 if not endplayer == '':
                     em.add_field(name='Premature ending.', value=endplayer + ' stopped the round prematurely.',inline=False)
@@ -160,19 +157,18 @@ async def countdown():
             if timer % 5 == 0 and gamestage == 'playing' and not timer == roundtime:
                 for n in range(len(party)):
 
-                    msg = 'Runde {}: **{}** \n'.format(round, letter)
+                    msg = 'Round {}: **{}** \n'.format(round, letter)
                     msg2 = ''
                     for i in range(len(categories)):
                         m = i + 1
                         msg2 = msg2 + (str(m) + '. ' + categories[i] + ': ' + answers[n][i] + '\n')
-                    msg3 = '\n antworte in folgendem Format: *1 Afrika*'
-                    msg4 = '\n \n ``Zeit verbleibend: ' + str(timer) + '``'
+                    msg3 = '\n please answer like the following: *1 Africa*'
+                    msg4 = '\n \n ``Time remaining: ' + str(timer) + '``'
                     if n >= len(answermsg):
                         n = len(answermsg)-1
                     if n < 0:
                         n = 0
-                    print(n)
-                    print(answermsg)
+
                     if party[n] not in leavers:
                         if timer > 0:
                             await client.edit_message(answermsg[n], msg + msg2 + msg3 + msg4)
@@ -181,16 +177,15 @@ async def countdown():
 
             if timer == 0 and gamestage == 'judge':
                 gamestage = 'judgedone'
-                desc = 'Bewertungsphase beendet'
-                em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+                desc = 'Judgephase ended'
+                em = discord.Embed(title='Scattergories', description=desc)
                 await client.send_message(mainchannel, embed=em)
 
 
             if timer % 5 == 0 and gamestage == 'judge' and not timer == judgetime:
-                msg = 'Fertig mit Bewerten? Klicke auf den grünen Hacken unter dieser Nachricht. \n'
-                msg2 = '``Zeit verbleibend: {}``'.format(str(timer))
+                msg = 'Done with judging? React to this message. \n'
+                msg2 = '``Time remaining: {}``'.format(str(timer))
 
-                print(donemsg)
 
                 if donemsg != 0:
                     if timer > 0:
@@ -253,50 +248,49 @@ async def on_message(message):
     # general commands for all users
 
     if msgsplit[0] == '$help':
-        embed = discord.Embed(title="Stadt, Land, Fluss", description="Hilfemenu")
-        embed.add_field(name='$commands', value='Eine Liste von Befehlen für Spieler.')
-        embed.add_field(name='$hostcommands', value = 'Eine Liste von Befehlen für den Host.')
-        embed.add_field(name='$rules', value='Die Regeln für das Spiel.')
+        embed = discord.Embed(title="Scattergories", description="Helpmenu")
+        embed.add_field(name='$commands', value='Commands for participants.')
+        embed.add_field(name='$hostcommands', value = 'Commands for the host.')
+        embed.add_field(name='$rules', value='Rules for the game.')
         await client.send_message(message.channel,embed=embed)
 
     if msgsplit[0] == '$commands':
-        embed = discord.Embed(title="Stadt, Land, Fluss", description="Spielerbefehle")
-        embed.add_field(name='$join', value='Trete einem bestehenden Spiel bei. *Dieser Befehl kann nur zwischen Runden benutzt werden*')
-        embed.add_field(name='$leave', value='Verlasse ein bestehendes Spiel. *Dieser Befehl kann nur zwischen Runden benutzt werden*')
+        embed = discord.Embed(title="Scattergories", description="Commands")
+        embed.add_field(name='$join', value='Join an ongoing game. *can only be used between rounds*')
+        embed.add_field(name='$leave', value='Leave an ongoing game. *can only be used between rounds*')
         await client.send_message(message.channel, embed=embed)
 
     if msgsplit[0] == '$hostcommands':
-        embed = discord.Embed(title="Stadt, Land, Fluss", description="Hostmenu")
-        embed.add_field(name='$endgame', value='Beendet das Spiel vorzeitig.')
-        embed.add_field(name='$start', value='Starte ein Spiel vorzeitig. *Kann nur in der Beitretephase benutzt werden*')
-        embed.add_field(name='$continue', value='Starte die nächste Runde vorzeitig. *Kann nur zwischen Runden benutzt werden*')
-        embed.add_field(name='$change <Variable> <Wert>', value='Ändere einen der folgenden Variablen: roundtime, roundmax, judgetime, breaktime')
+        embed = discord.Embed(title="Scattergories", description="Host commands")
+        embed.add_field(name='$endgame', value='Ends the game prematuerly.')
+        embed.add_field(name='$start', value='Start a game prematurely. *Can only be used during the join phase*')
+        embed.add_field(name='$continue', value='Start the next round prematurely. *Can only be used between rounds*')
+        embed.add_field(name='$change <variable> <value>', value='Change one of the following variables: roundtime, roundmax, judgetime, breaktime')
         await client.send_message(message.channel, embed=embed)
 
     if msgsplit[0] == '$rules':
-        embed = discord.Embed(title="Stadt, Land, Fluss: Regeln", description="Jede Runde wird ein zufälliger Buchstabe gewählt, finde zu jeder Kategorie ein Wort, das zu den Kategorien passt und " +
-                              'mit dem Buchstaben beginnt.')
+        embed = discord.Embed(title="Scattergories: Rules", description="Every round a random letter is chosen. Find words that fit the categories and the letter.")
         await client.send_message(message.channel, embed=embed)
 
     if gamestage == 'continue': #join and leave commands
         if msgsplit[0] == '$leave':
             if message.author in party:
                 leavers.append(message.author)
-                await client.send_message(mainchannel,'{} hat das Spiel verlassen.'.format(message.author.display_name))
+                await client.send_message(mainchannel,'{} left the game.'.format(message.author.display_name))
             else:
-                await client.send_message(message.channel,'Du bist im Moment in keinem Spiel.')
+                await client.send_message(message.channel,'You arent in any ongoing games.')
 
         if msgsplit[0] == '$join':
             if message.author in party:
                 if message.author in leavers:
                     leavers.remove(message.author)
-                    await client.send_message(mainchannel,'{} ist dem Spiel erneut beigetreten.'.format(message.author.display_name))
+                    await client.send_message(mainchannel,'{} joined the game again.'.format(message.author.display_name))
                 else:
-                    await client.send_message(message.channel,'Du bist schon im Spiel.')
+                    await client.send_message(message.channel,'You are already in a game.')
             else:
                 party.append(message.author)
                 points.append(0)
-                await client.send_message(mainchannel,'{} ist dem Spiel beigetreten.'.format(message.author.display_name))
+                await client.send_message(mainchannel,'{} joined the game.'.format(message.author.display_name))
 
     if msgsplit[0] == '$reset':
         reset()
@@ -332,13 +326,10 @@ async def on_message(message):
                     ranking[y][1] = points[y]
                     ranking[y][2] = pointsround[y]
 
-                print(ranking)
 
                 ranking.sort(key=lambda x: x[1], reverse=True)
 
-                print(ranking)
-
-                msg = 'Punktestand: \n ```\n'
+                msg = 'Points: \n ```\n'
                 msg2 = ''
 
                 for i in range(len(party)):
@@ -348,8 +339,8 @@ async def on_message(message):
 
                 await client.send_message(mainchannel, msg + msg2)
 
-            desc = 'Vielen Dank fürs Spielen.'
-            em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+            desc = 'Thanks for playing.'
+            em = discord.Embed(title='Scattergories', description=desc)
             await client.send_message(message.channel, embed=em)
             reset()
             return
@@ -360,31 +351,31 @@ async def on_message(message):
             gamestage = 'change'
             if msgsplit[1] == 'roundtime':
                 if is_int(msgsplit[2]):
-                    await client.send_message(message.channel, 'Rundenlänge erfolgreich von {} auf {} geändert.'.format(roundtime,msgsplit[2]))
+                    await client.send_message(message.channel, 'Roundlenght successfully changed from {} to {}.'.format(roundtime,msgsplit[2]))
                     roundtime = max(-1,int(msgsplit[2]))
                 else:
-                    await client.send_message(message.channel, 'Bitte gib eine ganze Zahl ein.')
+                    await client.send_message(message.channel, 'Please enter a number.')
 
             elif msgsplit[1] == 'roundmax':
                 if is_int(msgsplit[2]):
-                    await client.send_message(message.channel, 'Anzahl Runden erfolgreich von {} auf {} geändert.'.format(roundmax,msgsplit[2]))
+                    await client.send_message(message.channel, 'Amount of rounds successfully changed from {} to {}.'.format(roundmax,msgsplit[2]))
                     roundmax = max(-1,int(msgsplit[2]))
                 else:
-                    await client.send_message(message.channel, 'Bitte gib eine ganze Zahl ein.')
+                    await client.send_message(message.channel, 'Please enter a number.')
 
             elif msgsplit[1] == 'judgetime':
                 if is_int(msgsplit[2]):
-                    await client.send_message(message.channel, 'Bewertungszeit erfolgreich von {} auf {} geändert.'.format(judgetime,msgsplit[2]))
+                    await client.send_message(message.channel, 'Judgetime successfully changed from {} to {}.'.format(judgetime,msgsplit[2]))
                     judgetime = max(-1,int(msgsplit[2]))
                 else:
-                    await client.send_message(message.channel, 'Bitte gib eine ganze Zahl ein.')
+                    await client.send_message(message.channel, 'Please enter a number.')
 
             elif msgsplit[1] == 'breaktime':
                 if is_int(msgsplit[2]):
-                    await client.send_message(message.channel, 'Länge der Pausen erfolgreich von {} auf {} geändert.'.format(breaktime,msgsplit[2]))
+                    await client.send_message(message.channel, 'Lenghts of pauses successfully changed from {} to {}.'.format(breaktime,msgsplit[2]))
                     breaktime = max(-1,int(msgsplit[2]))
                 else:
-                    await client.send_message(message.channel, 'Bitte gib eine ganze Zahl ein.')
+                    await client.send_message(message.channel, 'Please enter a number.')
 
             else:
                 print('bad argument for &change')
@@ -401,18 +392,18 @@ async def on_message(message):
         i = 0
 
         if breaktime > 0:
-            breakmsg = await client.send_message(mainchannel,'``Die nächste Runde startet in {} Sekunden``'.format(breaktime))
+            breakmsg = await client.send_message(mainchannel,'``The next round starts in {} seconds.``'.format(breaktime))
         else:
-            breakmsg = await client.send_message(mainchannel,'Die nächste Runde startet bald')
+            breakmsg = await client.send_message(mainchannel,'The next round starts soon')
 
-        await client.send_message(mainchannel, 'Neue Spieler können beitreten, indem sie dem Bot $join schreiben \n'+
-                            'Falls du nicht mehr mitspielen willst, kannst du jetzt dem Bot $leave schreiben')
+        await client.send_message(mainchannel, 'New players can join with $join \n'+
+                            'If you want to leave the game, use $leave')
 
         while i != breaktime:
             await asyncio.sleep(1)
             if (breaktime-i-1) % 2 == 0:
                 if breaktime > 0:
-                    await client.edit_message(breakmsg,'``Die nächste Runde startet in {} Sekunden``'.format(breaktime-i-1))
+                    await client.edit_message(breakmsg,'``The next round starts in {} seconds.``'.format(breaktime-i-1))
             i += 1
 
             if gamestage != 'continue':
@@ -431,8 +422,8 @@ async def on_message(message):
         peopledone = 0  # amount of people reacted to the done message
         pointsround = []  # amount of points each player got this round
 
-        desc = 'Die Runde startet in 10 Sekunden, die Antworten werden in Direktnachrichten mit dem Bot geschrieben.'
-        em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+        desc = 'The round starts in 10 seconds. Answers will be sent through the DMs.'
+        em = discord.Embed(title='Scattergories', description=desc)
         await client.send_message(message.channel, embed=em)
 
         for i in range(len(party)):
@@ -454,13 +445,13 @@ async def on_message(message):
 
         letterlist.append(letter)
 
-        msg = 'Runde {}: **{}** \n'.format(round, letter)
+        msg = 'Round {}: **{}** \n'.format(round, letter)
         msg2 = ''
         for i in range(len(categories)):
             m = i + 1
             msg2 = msg2 + (str(m) + '. ' + categories[i] + '\n')
 
-        msg3 = '\n antworte in folgendem Format: *1 Afrika*'
+        msg3 = '\n please answer like the following: *1 Africa*'
 
 
         for i in range(len(party)):
@@ -476,8 +467,8 @@ async def on_message(message):
     if gamestage == 'gameend' and message.author == client.user:
         gamestage = 'gameended'
 
-        desc = 'Vielen Dank fürs Spielen.'
-        em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+        desc = 'Thanks for playing.'
+        em = discord.Embed(title='Scattergories', description=desc)
         await client.send_message(message.channel, embed=em)
 
         reset()
@@ -486,7 +477,6 @@ async def on_message(message):
     # script for points
     if gamestage == 'judgedone' and message.author == client.user:
         gamestage = 'points'
-        print(judgeuser)
         pointsround = []
         for i in range(len(party)):
             pointsround.append(0)
@@ -497,7 +487,6 @@ async def on_message(message):
                 authindex = party.index(auth)
                 pointsround[authindex] += 1
 
-        print(pointsround)
 
 
         for i in range(len(party)):
@@ -510,13 +499,11 @@ async def on_message(message):
             ranking[y][1] = points[y]
             ranking[y][2] = pointsround[y]
 
-        print(ranking)
 
         ranking.sort(key=lambda x: x[1], reverse=True)
 
-        print(ranking)
 
-        msg = 'Punktestand: \n ```\n'
+        msg = 'Points: \n ```\n'
         msg2 = ''
 
         for i in range(len(party)):
@@ -541,11 +528,11 @@ async def on_message(message):
 
         if round == roundmax:
             gamestage = 'gameend'
-            msg = 'Das Spiel ist abgeschlossen.'
+            msg = 'The game has ended.'
             await client.send_message(mainchannel, msg)
         else:
             gamestage = 'roundend'
-            msg = 'Runde {} abgeschlossen. Starte nächste Runde...'.format(round)
+            msg = 'Round {} done. Starting next round...'.format(round)
             await client.send_message(mainchannel,msg)
 
 
@@ -556,8 +543,8 @@ async def on_message(message):
     if gamestage == 'judging' and message.author == client.user:
         timer = judgetime
         gamestage = 'judge'
-        desc = 'Bewerte die Antworten deiner Mitspieler.'
-        em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+        desc = 'Judge the answers of the other participants.'
+        em = discord.Embed(title='Scattergories', description=desc)
         await client.send_message(mainchannel, embed=em)
 
         for s in range(len(categories)):
@@ -575,7 +562,7 @@ async def on_message(message):
                     await client.add_reaction(rea,'❌')
                     await asyncio.sleep(2)
 
-        msg = 'Fertig mit Bewerten? Klicke auf den grünen Hacken unter dieser Nachricht.'
+        msg = 'Finished with judging? React to this message.'
 
         donemsg = await client.send_message(mainchannel,msg)
         await client.add_reaction(donemsg,'✅')
@@ -606,7 +593,7 @@ async def on_message(message):
                 endplayer = message.author.display_name
                 return
             else:
-                msg = 'Du hast noch nicht bei allen Kategorien ein Wort.'
+                msg = 'You havent entered a word for all categories yet.'
                 await client.send_message(message.author, msg)
 
 
@@ -627,16 +614,16 @@ async def on_message(message):
         print(answers)
 
         if not '' in answers[userindex]:
-            msg = 'Du hast zu allen Kategorien eine Antwort aufgeschrieben. Schreibe "$stop" um die Runde zu stoppen.'
+            msg = 'You have entered a word for every category, stop the round prematurely with $stop'
             await client.send_message(message.author, msg)
 
-        msg = 'Runde {}: **{}** \n'.format(round, letter)
+        msg = 'Round {}: **{}** \n'.format(round, letter)
         msg2 = ''
         for i in range(len(categories)):
             m = i + 1
             msg2 = msg2 + (str(m) + '. ' + categories[i] + ': ' + answers[userindex][i] + '\n')
-        msg3 = '\n antworte in folgendem Format: *1 Afrika*'
-        msg4 = '\n \n ``Zeit verbleibend: ' + str(timer) + '``'
+        msg3 = '\n please answer like the following: *1 Africa*'
+        msg4 = '\n \n ``Time remaining: ' + str(timer) + '``'
 
         if timer > 0:
             await client.edit_message(answermsg[userindex], msg + msg2 + msg3 + msg4)
@@ -645,13 +632,12 @@ async def on_message(message):
 
 
     # script for joining
-    if msgsplit[0] != 'Spiel' and msgsplit[0] != 'Klicke' and message.author == client.user and gamestage == 'joinstart':
+    if msgsplit[0] != 'Spiel' and msgsplit[0] != 'React' and message.author == client.user and gamestage == 'joinstart':
         gamestage = 'join'
-        reactmsg = await client.send_message(message.channel, 'Klicke den grünen Hacken um beizutreten!')
+        reactmsg = await client.send_message(message.channel, 'React to this message to join!')
 
         global joinid
         joinid = reactmsg.id
-        print(joinid)
 
         await client.add_reaction(reactmsg,'✅') #add the first reaction
 
@@ -660,10 +646,10 @@ async def on_message(message):
 
         while i != jointime: #wait "timer" seconds
             await asyncio.sleep(1)
-            msg = 'Klicke den grünen Hacken um beizutreten! \n'
-            msg3 = ' ``{} Sekunden übrig`` \n'.format(jointime-1-i)
+            msg = 'React to this message to join! \n'
+            msg3 = ' ``{} seconds remaining`` \n'.format(jointime-1-i)
             if len(reactors) > 0:
-                msg2 = '\n' + 'Teilnehmer: \n' + '```\n' + '\n'.join(reactors) + '```' #send the participants list
+                msg2 = '\n' + 'Participants: \n' + '```\n' + '\n'.join(reactors) + '```' #send the participants list
             else:
                 msg2 = '' #if nobody joins, we don't need to send the participant list
 
@@ -682,8 +668,8 @@ async def on_message(message):
 
 
         gamestage = 'starting up'
-        desc = 'Das Spiel startet in 10 Sekunden, die Antworten werden in Direktnachrichten mit dem Bot geschrieben.'
-        em = discord.Embed(title='Stadt, Land, Fluss',description=desc)
+        desc = 'The game starts in 10 seconds, answers are written in DMs.'
+        em = discord.Embed(title='Scattergories',description=desc)
         await client.send_message(message.channel, embed=em)
 
         for i in range(len(party)):
@@ -708,13 +694,12 @@ async def on_message(message):
             m = i + 1
             msg2 = msg2 + (str(m) + '. ' + categories[i] + '\n')
 
-        msg3 = '\n antworte in folgendem Format: *1 Afrika*'
+        msg3 = '\n please answer like the following: *1 Africa*'
 
         for i in range(len(party)):
             if party[i] not in leavers:
                 sent = await client.send_message(party[i],msg + msg2 + msg3)
                 answermsg.append(sent)
-                print('added object to answermsg')
             pointsround.append(0)
 
         print(answermsg)
@@ -740,13 +725,13 @@ async def on_message(message):
         mainchannel = message.channel
         gamestage = 'setup'
 
-        msg = 'Bitte gib die Kategorien an: (durch Kommas getrennt)'
+        msg = 'Please enter the categories: (seperated by commas)'
         await client.send_message(message.channel, msg)
 
-        categoriesraw = await client.wait_for_message(timeout = 60, author = message.author, channel = message.channel)
+        categoriesraw = await client.wait_for_message(timeout = 300, author = message.author, channel = message.channel)
 
         if categoriesraw is None:
-            await client.send_message(message.channel, 'Zeit abgelaufen, bitte starte das Setup erneut')
+            await client.send_message(message.channel, 'Timed out, please start the setup again')
             gamestage = 'none'
             return
 
@@ -760,7 +745,7 @@ async def on_message(message):
         categories = categoriesraw.split(', ')
 
 
-        msg = 'Bitte gib die Rundenlänge in Sekunden an:'
+        msg = 'Please enter the roundlenght (in seconds):'
         await client.send_message(message.channel, msg)
 
         roundtime = await client.wait_for_message(timeout = 10, author = message.author, channel = message.channel)
@@ -769,7 +754,7 @@ async def on_message(message):
 
         if roundtime is None:
             roundtime = len(categories) * 10
-            await client.send_message(message.channel, 'Zeit abgelaufen. Rundenlänge auf Standardwert {} gesetzt.'.format(roundtime))
+            await client.send_message(message.channel, 'Timed out, set roundlength to {}.'.format(roundtime))
         elif not is_int(roundtime.content):
             if roundtime.content.startswith('$reset'):
                 return
@@ -778,19 +763,19 @@ async def on_message(message):
             if gamestage == 'none':
                 return
             roundtime = len(categories) * 10
-            await client.send_message(message.channel, 'Nicht valider Wert eingegeben. Rundenlänge auf Standardwert {} gesetzt.'.format(roundtime))
+            await client.send_message(message.channel, 'Not valid value, set roundlength to {}.'.format(roundtime))
         else:
             roundtime = int(roundtime.content)
-            await client.send_message(message.channel, 'Rundenlänge erfolgreich auf {} gesetzt.'.format(roundtime))
+            await client.send_message(message.channel, 'Set roundlenght to {} successfully.'.format(roundtime))
 
 
         if roundtime < 1:
-            await client.send_message(message.channel, 'Da der eingegebene Wert negativ ist, können Runden nur manuell durch $stop gestoppt werden.')
+            await client.send_message(message.channel, 'Because the value you entered was negative, rounds will only finish when someone enters $stop')
             roundtime = -1
 
 
 
-        msg = 'Bitte gib die Anzahl Runden an:'
+        msg = 'Please enter the amount of rounds:'
         await client.send_message(message.channel, msg)
 
         roundmax = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
@@ -799,7 +784,7 @@ async def on_message(message):
 
         if roundmax is None:
             roundmax = 5
-            await client.send_message(message.channel, 'Zeit abgelaufen. Rundenanzahl auf Standardwert {} gesetzt.'.format(roundmax))
+            await client.send_message(message.channel, 'Timed out, set amount of rounds to {}.'.format(roundmax))
         elif not is_int(roundmax.content):
             if roundmax.content.startswith('$reset'):
                 return
@@ -808,19 +793,19 @@ async def on_message(message):
             if gamestage == 'none':
                 return
             roundmax = 5
-            await client.send_message(message.channel, 'Nicht valider Wert eingegeben. Rundenanzahl auf Standardwert {} gesetzt.'.format(roundmax))
+            await client.send_message(message.channel, 'Not valid value, set amount of rounds to {}.'.format(roundmax))
         else:
             roundmax = int(roundmax.content)
-            await client.send_message(message.channel, 'Rundenanzahl erfolgreich auf {} gesetzt.'.format(roundmax))
+            await client.send_message(message.channel, 'Set amount of rounds to {} successfully.'.format(roundmax))
 
 
         if roundmax < 1:
-            await client.send_message(message.channel, 'Da der eingegebene Wert negativ ist, wird das Spiel unendlich weitergehen, bis es mit $endgame gestoppt wird.')
+            await client.send_message(message.channel, 'Because the value you entered was negative, the game can only end with $endgame')
             roundmax = -1
 
 
         if advanced:
-            msg = 'Bitte gib an wie lange Spieler zum beitreten haben:'
+            msg = 'Please enter how long players have to join the game:'
             await client.send_message(message.channel, msg)
 
             jointime = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
@@ -828,24 +813,24 @@ async def on_message(message):
 
             if jointime is None:
                 jointime = 20
-                await client.send_message(message.channel,'Zeit abgelaufen. Beitretezeit auf Standardwert {} gesetzt.'.format(jointime))
+                await client.send_message(message.channel,'Timed out, set jointime to {}.'.format(jointime))
             elif not is_int(jointime.content):
                 if jointime.content.startswith('$reset'):
                     return
                 if jointime.content.startswith('$endgame'):
                     return
                 jointime = 20
-                await client.send_message(message.channel,'Nicht valider Wert eingegeben. Beitretezeit auf Standardwert {} gesetzt.'.format(jointime))
+                await client.send_message(message.channel,'Not valid value, set jointime to {}.'.format(jointime))
             else:
                 jointime = int(jointime.content)
-                await client.send_message(message.channel, 'Beitretezeit erfolgreich auf {} gesetzt.'.format(jointime))
+                await client.send_message(message.channel, 'Set jointime to {} successfully.'.format(jointime))
 
             if jointime < 1:
-                await client.send_message(message.channel,'Da der eingegebene Wert negativ ist, kann das Spiel nur manuell durch $start gestartet werden.')
+                await client.send_message(message.channel,'Because the value you entered was negative, the game can only start with $start')
                 jointime = -1
 
 
-            msg = 'Bitte gib an wie lange Spieler zum bewerten der Antworten haben:'
+            msg = 'Please enter how long players have to judge the answers:'
             await client.send_message(message.channel, msg)
 
             judgetime = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
@@ -853,26 +838,25 @@ async def on_message(message):
 
             if judgetime is None:
                 judgetime = 180
-                await client.send_message(message.channel,'Zeit abgelaufen. Bewertungszeit auf Standardwert {} gesetzt.'.format(judgetime))
+                await client.send_message(message.channel,'Timed out, set judgetime to {}'.format(judgetime))
             elif not is_int(judgetime.content):
                 if judgetime.content.startswith('$reset'):
                     return
                 if judgetime.content.startswith('$endgame'):
                     return
                 judgetime = 180
-                await client.send_message(message.channel,'Nicht valider Wert eingegeben. Bewertungszeit auf Standardwert {} gesetzt.'.format(judgetime))
+                await client.send_message(message.channel,'Not valid value, set judgetime to {}.'.format(judgetime))
             else:
                 judgetime = int(judgetime.content)
-                await client.send_message(message.channel, 'Bewertungszeit erfolgreich auf {} gesetzt.'.format(judgetime))
+                await client.send_message(message.channel, 'Set judgeime to {} successfully.'.format(judgetime))
 
             if judgetime < 1:
-                await client.send_message(message.channel,'Da der eingegebene Wert negativ ist, kann die nächste Runde erst beginngen wenn alle Spieler ' +
-                                                          'bereit sind oder mit $continue')
+                await client.send_message(message.channel,'Because the value you entered was negative, the next round can only start with $continue')
                 judgetime = -1
 
 
 
-            msg = 'Bitte gib an wie lange die Pausen zwischen Runden sind:'
+            msg = 'Please enter how long the breaks between rounds are:'
             await client.send_message(message.channel, msg)
 
             breaktime = await client.wait_for_message(timeout=10, author=message.author, channel=message.channel)
@@ -881,7 +865,7 @@ async def on_message(message):
             if breaktime is None:
                 breaktime = 15
                 await client.send_message(message.channel,
-                                          'Zeit abgelaufen. Pausenlänge auf Standardwert {} gesetzt.'.format(
+                                          'Timed out, set breaklenght to {}.'.format(
                                               breaktime))
             elif not is_int(breaktime.content):
                 if breaktime.content.startswith('$reset'):
@@ -890,16 +874,16 @@ async def on_message(message):
                     return
                 breaktime = 15
                 await client.send_message(message.channel,
-                                          'Nicht valider Wert eingegeben. Pausenlänge auf Standardwert {} gesetzt.'.format(
+                                          'Not valid value, set breaklenght to {}.'.format(
                                               breaktime))
             else:
                 breaktime = int(breaktime.content)
                 await client.send_message(message.channel,
-                                          'Pausenlänge erfolgreich auf {} gesetzt.'.format(breaktime))
+                                          'Successfully set breaklength to {}.'.format(breaktime))
 
             if breaktime < 1:
                 await client.send_message(message.channel,
-                                          'Da der eingegebene Wert negativ ist, kann die nächste Runde erst mit &contine beginnen')
+                                          'Because the value you entered was negative, the next round can only start with $continue')
                 breaktime = -1
 
 
@@ -910,31 +894,31 @@ async def on_message(message):
 
         if host == None:
             host = client.user
-        em = discord.Embed(title='Stadt, Land, Fluss', description='Setup complete', colour=0xDEADBF)
+        em = discord.Embed(title='Scattergories', description='Setup complete', colour=0xDEADBF)
         em.set_author(name=host.display_name, icon_url=client.user.default_avatar_url)
         cats = '\n'.join(categories)
-        em.add_field(name='Kategorien', value=cats, inline=False)
+        em.add_field(name='categories', value=cats, inline=False)
         if roundtime < 1:
-            em.add_field(name='Rundenzeit', value='Manuell', inline=False)
+            em.add_field(name='roundlenght', value='manual', inline=False)
         else:
-            em.add_field(name='Rundenzeit', value=str(roundtime), inline=False)
+            em.add_field(name='roundlength', value=str(roundtime), inline=False)
         if roundmax < 1:
-            em.add_field(name='Rundenanzahl', value='Manuell', inline=False)
+            em.add_field(name='amount of rounds', value='manual', inline=False)
         else:
-            em.add_field(name='Rundenanzahl', value=str(roundmax), inline=False)
+            em.add_field(name='amounts of rounds', value=str(roundmax), inline=False)
         if advanced:
             if jointime < 1:
-                em.add_field(name='Beitretezeit', value='Manuell', inline=False)
+                em.add_field(name='jointime', value='manual', inline=False)
             else:
-                em.add_field(name='Beitretezeit', value=str(jointime), inline=False)
+                em.add_field(name='jointime', value=str(jointime), inline=False)
             if judgetime < 1:
-                em.add_field(name='Bewertungszeit', value='Manuell', inline=False)
+                em.add_field(name='judgetime', value='manual', inline=False)
             else:
-                em.add_field(name='Bewertungszeit', value=str(judgetime), inline=False)
+                em.add_field(name='judgetime', value=str(judgetime), inline=False)
             if breaktime < 1:
-                em.add_field(name='Pausenlänge', value='Manuell', inline=False)
+                em.add_field(name='breaklenght', value='manual', inline=False)
             else:
-                em.add_field(name='Pausenlänge', value=str(breaktime), inline=False)
+                em.add_field(name='breaklength', value=str(breaktime), inline=False)
         await client.send_message(message.channel, embed=em)
 
 
@@ -954,13 +938,9 @@ async def on_reaction_add(reaction, user):
         global mainchannel
         global judgeid
 
-        print(reaction.message)
-        print(donemsg)
 
-        if reaction.message.content.startswith('Fertig') and reaction.message.author ==  client.user:
-            print('done')
+        if reaction.message.content.startswith('Finished') and reaction.message.author ==  client.user:
             if not user in party:
-                print('user not in the game reacted to done message')
                 return
             if user in leavers:
                 return
@@ -972,8 +952,8 @@ async def on_reaction_add(reaction, user):
 
             if peopledone >= len(party) - len(leavers):
                 gamestage = 'judgedone'
-                desc = 'Bewertungsphase beendet'
-                em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+                desc = 'Judgephase finished'
+                em = discord.Embed(title='Scattergories', description=desc)
                 await client.send_message(mainchannel, embed=em)
 
         if reaction.message.id in judgeid:
@@ -1008,9 +988,6 @@ async def on_reaction_add(reaction, user):
         reactmsg = reaction.message.id
         reactors.append(user.name)
         party.append(user)
-        print(reactors)
-        msg = '{} added a reaction to the following message: *{}*'.format(user, reactmsg)
-        print(msg)
 
 
 @client.event
@@ -1028,11 +1005,8 @@ async def on_reaction_remove(reaction, user):
         global mainchannel
         global judgeid
 
-        print(reaction.message)
-        print(donemsg)
         if reaction.message == donemsg:
             if not user in party:
-                print('user not in the game reacted to done message')
                 return
             if reaction.emoji != '✅':
                 return
@@ -1041,8 +1015,8 @@ async def on_reaction_remove(reaction, user):
 
             if peopledone >= len(party):
                 gamestage = 'judgedone'
-                desc = 'Bewertungsphase beendet'
-                em = discord.Embed(title='Stadt, Land, Fluss', description=desc)
+                desc = 'Judgephase done'
+                em = discord.Embed(title='Scattergories', description=desc)
                 await client.send_message(mainchannel, embed=em)
 
         if reaction.message.id in judgeid:
@@ -1050,11 +1024,9 @@ async def on_reaction_remove(reaction, user):
 
             if reaction.emoji == '✅':
                 judgeyes[judgeindex] -= 1
-                print(judgeyes)
 
             if reaction.emoji == '❌':
                 judgeyes[judgeindex] += 1
-                print(judgeyes)
 
 
 
