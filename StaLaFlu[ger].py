@@ -1,6 +1,7 @@
 import discord
 import random
 import asyncio
+import os
 
 client = discord.Client()
 
@@ -92,7 +93,7 @@ def reset():
     letter = ''
     letterlist = []  # letters that already were in the game once
     answermsg = []  # list of all the messages in the "playing" phase
-    mainchannel = 0  # the channel where the joining takes place
+    #mainchannel = 0  # the channel where the joining takes place
     judgemsg = []  # list of all the messages in the "judge" phase
     judgeid = []  # list of all the message ids in the "judge" phase
     judgeyes = []  # list of all the positive judges
@@ -296,6 +297,11 @@ async def on_message(message):
                 party.append(message.author)
                 points.append(0)
                 await client.send_message(mainchannel,'{} ist dem Spiel beigetreten.'.format(message.author.display_name))
+
+    if msgsplit[0] == '$reset':
+        reset()
+        return
+
 
     # the following are host commands
     if message.author == host and message.channel == mainchannel:
@@ -769,6 +775,8 @@ async def on_message(message):
                 return
             if roundtime.content.startswith('$endgame'):
                 return
+            if gamestage == 'none':
+                return
             roundtime = len(categories) * 10
             await client.send_message(message.channel, 'Nicht valider Wert eingegeben. Rundenlänge auf Standardwert {} gesetzt.'.format(roundtime))
         else:
@@ -796,6 +804,8 @@ async def on_message(message):
             if roundmax.content.startswith('$reset'):
                 return
             if roundmax.content.startswith('$endgame'):
+                return
+            if gamestage == 'none':
                 return
             roundmax = 5
             await client.send_message(message.channel, 'Nicht valider Wert eingegeben. Rundenanzahl auf Standardwert {} gesetzt.'.format(roundmax))
